@@ -1,0 +1,23 @@
+{
+  "tips": [
+    {
+      "title": "MongoDB Collection",
+      "message": "A grouping of MongoDB documents. A collection is the equivalent of an RDBMS table. A collection exists within a single database. Collections do not enforce a schema. Documents within a collection can have different fields. Typically, all documents in a collection have a similar or related purpose. See What is a namespace in MongoDB?."
+    }
+  ],
+
+  "hints": [
+    {
+      "for": "access_token",
+      "context": "Hist For Access Tokens"
+    },
+    {
+      "for": "query",
+      "context": "Hist For query"
+    },
+    {
+      "for": "rawInput",
+      "context": "Hist For Raw Inputs"
+    }
+  ]
+}

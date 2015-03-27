@@ -1,0 +1,287 @@
+extends layouts/admin_layout
+
+block content
+  .container-fluid
+    .row
+      .col-md-3
+        .list-group.sub-bar-list-group
+          if !target
+            a(href="#").list-group-item Dragos
+            if dragos && dragos.length > 0
+              for drago in dragos
+                a(href="/dragos/#{drago.name}").list-group-item 
+                  strong #{drago.name}.objapi.kny.co
+                    button(type="button" class="close").delete-drago
+                      span(aria-hidden="true") &times;
+                  br
+                  br
+                  | #{drago.description}
+          else
+            a(href="#").list-group-item Collections
+            if collections && collections.length > 0
+              for collection in collections
+                a(href="/dragos/#{target.name}/collections/#{collection.name}").list-group-item #{collection.name}
+            a(href="#", data-toggle="modal", data-target="#newcollection").list-group-item.list-group-item-success
+              span.fa.fa-plus
+              strong  Create Collection
+
+      .col-md-9
+        .well
+          if dragos.length === 0
+            h1 Dragos
+            p Dragos are mean Project at Object API,
+            hr
+            p It Look like you don't have any Project. Let Create one and tell your story to the world.
+            button.btn.btn-primary(data-toggle="modal", data-target="#newdrago", onclick="newdragoform.reset()") Create a Drago
+          else if !target
+            h1 Dragos
+            p Dragos are mean Project at Object API,
+            hr
+            button.btn.btn-primary(data-toggle="modal", data-target="#newdrago", onclick="newdragoform.reset()") Create a Drago
+          else
+            .row
+              .col-md-6
+                h1 #{target.name} 
+                  small.gray Drago
+              .col-md-6
+                .btn-group.btn-group-justified.pull-down
+                  .btn-group
+                    .btn.btn-success(data-toggle="modal", data-target="#newtoken", onclick="newtokenform.reset()") Add Token
+                  .btn-group
+                    .btn.btn-primary(data-toggle="modal", data-target="#newdrago", onclick="newdragoform.reset()", data="#{JSON.stringify(target)}").target-drago-edit Edit
+                  .btn-group
+                    .btn.btn-warning(data-target-name="#{target.name}").target-drago-delete Delete
+            hr
+            .row
+              .col-md-12
+                ul.list-group
+                  li.list-group-item
+                    .row
+                      .col-md-2
+                        strong URL:
+                      .col-md-8 #{target.name}.objapi.kny.co
+                  li.list-group-item
+                    .row
+                      .col-md-2
+                        strong Description:
+                      .col-md-8 #{target.description}
+                  if target.access_token
+                    for token in target.access_token
+                      li.list-group-item
+                        .row
+                          .col-md-2
+                            strong Token
+                          .col-md-8 #{token.name}
+                            br
+                            br
+                            | #{token.token}
+                          if token.name !== "autogenerate"
+                            .col-md-2
+                              .btn-group-vertical
+                                .btn-group
+                                  button.btn.btn-primary.token-edit.pull-right(data="#{JSON.stringify(token)}") Edit
+                                .btn-group
+                                  button.btn.btn-warning.token-delete(data-token="#{token.token}") Remove
+
+  .modal.fade#newdrago
+    .modal-dialog
+      .modal-content
+        form(method="POST", action="/dragos")#newdrago-form
+          input(type="hidden", name="dragoID")#newdrago-collection-id
+          .modal-header
+            button(type="button" class="close" data-dismiss="modal" aria-label="Close")
+              span(aria-hidden="true") &times;
+            h4.modal-titleNew Drago
+          .modal-body
+            p Tell small things about your Drago
+            .form-group.input-group
+              input(type="text", required="true", pattern="[a-z][a-z0-1_-]+", name="name", placeholder="Name your Drago, [a-z][a-z0-1_-]", aria-describedby="subdomain-input-addon").form-control#newdrago-collection-name
+              span#subdomain-input-addon.input-group-addon
+                strong .objapi.kny.co
+            .form-group
+              textarea(type="text", required="true", name="description", placeholder="Please add some description", row=10).form-control#newdrago-collection-description
+            .checkbox
+              label
+                input(type="checkbox", name="haveGCM")#haveGCM
+                | Will you use Google Cloud Messaging?
+            .form-group.option-for-gcm
+              p Make sure 
+                span.label.label-info 128.199.69.68
+                |  is include as allowed IPs at your Google Project.
+              input(type="text", name="gcmkey", placeholder="GCM Key for server applications").form-control#newdrago-collection-gcmkey
+
+          .modal-footer
+            button(type="cancel", data-dismiss="modal").btn.btn-default Close
+            button(type="submit").btn.btn-primary Rock
+  
+  if target
+    .modal.fade#newcollection
+      .modal-dialog
+        .modal-content
+          form(method="POST", action="/dragos/#{target.name}/collections")#newcollection-form
+            .modal-header
+              button(type="button" class="close" data-dismiss="modal" aria-label="Close")
+                span(aria-hidden="true") &times;
+              h4.modal-titleNew Collection
+            .modal-body
+              p Collection are database, you can 
+                code Save
+                | 
+                code Query
+                | 
+                code Delete
+                |  any 
+                code JSON
+                |  format data, whatever you want.
+              .form-group
+                input(type="text", required="true", pattern="[a-z][a-z0-1_-]+", name="name", placeholder="Name your Collection, use small letter without space", aria-describedby="subdomain-input-addon").form-control
+
+            .modal-footer
+              button(type="cancel", data-dismiss="modal").btn.btn-default Close
+              button(type="submit").btn.btn-primary Rock
+
+    .modal.fade#newtoken
+      .modal-dialog
+        .modal-content
+          form(method="POST", action="/dragos/#{target.name}/token")#newtoken-form
+            .modal-header
+              button(type="button" class="close" data-dismiss="modal" aria-label="Close")
+                span(aria-hidden="true") &times;
+              h4.modal-titleNew Access Tokens
+            .modal-body
+              p Access Tokens are way to access API to do every stuff
+              input(type="hidden", name="token")#newtoken-form-id
+              .form-group
+                input(type="text", required="true", name="name", placeholder="Name your Access Tokens", aria-describedby="subdomain-input-addon")#newtoken-form-name.form-control
+              
+              .form-group
+                if collections && collections.length > 0
+                  h3 Access
+                  for collection in collections
+                    .row(data-collection-name="#{collection.name}").collection-access
+                      input(type="hidden", name="collections", value="#{collection.name}")
+                      .col-md-4
+                        label /#{collection.name}
+                      .col-md-4
+                        label Read
+                          input(type="checkbox", name="read", data-access="read", value="#{collection.name}").form-control
+                      .col-md-4
+                        label Write
+                          input(type="checkbox", name="write", data-access="write", value="#{collection.name}").form-control
+
+            .modal-footer
+              button(type="cancel", data-dismiss="modal").btn.btn-default Close
+              button(type="submit").btn.btn-primary Rock
+
+
+block scripts
+  script.
+    var newtokenform = document.getElementById("newtoken-form");
+    var newdragoform = document.getElementById("newdrago-form");
+    (function(){
+      var haveGCM = $("#haveGCM");
+      var gcmOptions = $(".option-for-gcm");
+      
+      haveGCM.on("change", function(event){
+        if(haveGCM[0].checked)
+          gcmOptions.val("").removeClass("hidden");
+        else
+          gcmOptions.val("").addClass("hidden");
+      });
+
+      var tokens = $(".token-edit");
+      var tokensDelete = $(".token-delete");
+      var newtoken = $("#newtoken");
+
+      var _id = $("#newtoken-form-id");
+      var _name = $("#newtoken-form-name");
+      var _collections = $(".collection-access");
+
+      var _targetDragoEdit = $(".target-drago-edit");
+
+      newtoken.on("show.bs.modal", function(event){
+        _collections.each(function(){
+          var that = $(this);
+          var name = that.attr("data-collection-name");
+          that.find("input[name='collections']").val(name);
+        });
+      });
+
+      tokens.click(function(event){
+        var data = JSON.parse(event.target.getAttribute("data"));
+        _id.val(data.token);
+        _name.val(data.name);
+
+        _collections.each(function(){
+          var that = $(this);
+          var name = that.attr("data-collection-name");
+          that.find("input[data-access='read']").prop("checked",!(data.readBlock && data.readBlock.indexOf(name) !== -1));
+          that.find("input[data-access='write']").prop("checked",!(data.writeBlock && data.writeBlock.indexOf(name) !== -1));
+        });
+
+        newtoken.modal("show");
+      });
+
+      var _targetDragoId = $("#newdrago-collection-id");
+      var _targetDragename = $("#newdrago-collection-name");
+      var _targetDragedescription = $("#newdrago-collection-description");
+      var _targetDragegcmkey = $("#newdrago-collection-gcmkey");
+
+      _targetDragoEdit.click(function(event){
+        var data = JSON.parse(event.target.getAttribute("data"));
+        
+        _targetDragoId.val(data._id);
+        _targetDragename.val(data.name);
+        _targetDragedescription.val(data.description);
+        if(data.gcmkey && data.gcmkey.length > 0){
+          _targetDragegcmkey.parent().removeClass("hidden");
+          _targetDragegcmkey.val(data.gcmkey[0]);
+          haveGCM.prop("checked", true);
+        } else {
+          _targetDragegcmkey.parent().addClass("hidden");
+          haveGCM.prop("checked", false);
+        }
+        newdrago.modal("show");
+      });
+
+      var tokenURL = newtokenform.getAttribute("action");
+      tokensDelete.click(function(event){
+        if(confirm("Are you sure want to delete this Drago")){
+          var _token = event.target.getAttribute("data-token");
+          $.ajax(tokenURL,{
+            method: "DELETE",
+            data: { token: _token },
+            dataType: "jsonp",
+            crossDomain: true,
+            success: function(data, status, xhr){
+              if(data.error)
+                alertOnPage("alert", "Alert", data.error.message);
+              else
+                document.location.reload();
+            },
+            error: function(xhr, status){
+              console.log("Something wrong");
+            }
+          });
+        }
+      });
+
+      $(".target-drago-delete").click(function(event){
+        if(confirm("Are you sure want to delete this Drago")){
+          var name = event.target.getAttribute("data-target-name");
+          $.ajax("/dragos/" + name, {
+            method: "DELETE",
+            dataType: "jsonp",
+            success: function(data, status, xhr){
+              if(data.error)
+                alertOnPage("alert", "Alert", data.error.message);
+              else
+                document.location.reload();
+            },
+            error: function(xhr, status){
+              console.log("Something wrong");
+            }
+          });
+        }
+      });
+    }());

@@ -1,0 +1,367 @@
+extends layouts/admin_layout
+
+block content
+  .container-fluid
+    .row
+      .col-md-3.sub-bar
+        .list-group.sub-bar-list-group
+          a(href="/dragos/#{drago.name}").list-group-item 
+            h1 #{collection.name} 
+              small.gray  @#{drago.name}
+          a(href="#list").list-group-item 
+            span.fa.fa-list
+            |  LIST
+          a(href="#add").list-group-item 
+            span.fa.fa-plus
+            |  ADD
+          a(href="#schema").list-group-item 
+            span.fa.fa-connectdevelop
+            |  Schema
+          a(href="#explorer").list-group-item 
+            span.fa.fa-connectdevelop
+            |  API Explorer
+          a(href="#settings").list-group-item 
+            span.fa.fa-cog
+            |  Settings
+
+        .list-group
+          .list-group-item
+            h3 Hint
+            #hints
+              if hints
+                for hist in hints
+                  .hidden.hint(data-for="#{hist.for}")
+                    p !{hist.context}
+
+      .col-md-9.well-content
+        .well#list
+          .row
+            .col-md-12
+              h1 LIST
+                .pull-right
+                  button#getList.btn.btn-primary Get List
+              br
+              #list-holder.list-group
+              
+        .well#add
+          .row
+            .col-md-12
+              h1 ADD
+              #editor_holder_add
+              br
+              btn-group
+                button#addButton.btn.btn-success Submit
+        .well#schema
+          .row
+            .col-md-12
+              h1 Schema
+              #editor_holder_schema(data-savedSchema="#{JSON.stringify(collection.savedSchema)}")
+              br
+              form(action="/dragos/#{drago.name}/collections/#{collection.name}/updateschema", method="POST")#schema-update-from
+                input(type="hidden", name="schema", value="#{JSON.stringify(collection.savedSchema)}")#schemaInput
+                .btn-group
+                  button(type="submit").btn.btn-success.schema-update-button Update
+                  button(type="button").btn.btn-primary.schema-reset-button(data="#{JSON.stringify(collection.savedSchema)}") Reset
+                  button(type="button").btn.btn-info.schema-example-button Example Schema
+
+        .well#explorer
+          form#xhr(role="form", method="GET")
+            input(type="hidden", value="http://#{drago.name}.kny.local:3500/#{collection.name}")#xhr-base
+            .row
+              .col-md-12
+                .form-group.input-group
+                  span.input-group-addon /#{collection.name}
+                  input(type="text", value="")#xhr-url.form-control
+                  .input-group-btn
+                    button(type="button", data-toggle="dropdown", aria-expanded="false").btn.btn-primary.dropdown-toggle 
+                      span#methodButtonText GET 
+                      span.caret
+                    ul(role="menu").dropdown-menu.dropdown-menu-right.form-method-choose
+                      li: a(href="#", data-form-method="GET", data-button-color="primary") GET
+                      li: a(href="#", data-form-method="SEARCH", data-button-color="success") SEARCH
+                      li: a(href="#", data-form-method="POST", data-button-color="warning") POST
+                      li: a(href="#", data-form-method="PUT", data-button-color="info") PUT
+                      li: a(href="#", data-form-method="DELETE", data-button-color="danger") DELETE
+            .row
+              .col-md-12
+                .form-group.input-group
+                  span.input-group-addon access_token=
+                  input(type="text", data-key="access_token", value="#{drago.access_token[0].token}").form-control.the-input
+              .col-md-10
+                .form-group.input-group
+                  span.input-group-addon Query
+                  input(type="text", data-key="query", placeholder="&field=name,atrist&sort=createdAt&limit=25&offset=10").form-control.the-input
+              .col-md-2
+                .btn-group.btn-group-justified
+                  .btn-group
+                    button.btn.btn-default(type="submit") GO
+              .col-md-12.hidden#rawinput
+                h3 Raw JSON
+                #theinput.the-input
+              hr
+              .col-md-12.hidden#output-container
+                #output
+          hr
+          .content
+            if tip
+              h3 #{tip.title}
+              p #{tip.message}
+
+block scripts
+  script.
+    (function(){
+      var methodButtons = $(".form-method-choose a");
+      var methodButtonText = $("#methodButtonText");
+      var xhr = $("#xhr");
+      var xhrBase = $("#xhr-base");
+      var xhrUrl = $("#xhr-url");
+      var hints = $(".hint");
+      var rawinput = $("#rawinput");
+      var theInputs = $("#xhr .the-input");
+
+      var output = $("#output");
+      var theinput = $("#theinput");
+
+      var editor_output = new JSONEditor(output[0], {mode: "view"}, {});
+      var editor_theinput = new JSONEditor(theinput[0], {mode: "tree"}, {
+        mode: "single",
+        data: {}
+      });
+
+      function toQuery(){
+        var base = xhrBase.val();
+        //- Access Token
+        var url = "?access_token=" + theInputs[0].value;
+        url += theInputs[1].value;
+        xhrUrl.val(url);
+      }
+
+      theInputs.on("focus", function(event){
+        var hint = $(".hint[data-for='"+event.target.getAttribute("data-key")+"']");
+        hints.addClass("hidden");
+        hint.removeClass("hidden");
+        outputContainer.addClass("hidden");
+      });
+
+      theInputs.on("keyup", toQuery);
+
+      xhrUrl.on("keyup", function(event){
+        var base = xhrBase.val();
+      });
+
+      methodButtons.click(function(event){
+        event.preventDefault();
+        var target = event.target;
+        var method = target.getAttribute("data-form-method");
+
+        outputContainer.addClass("hidden");
+
+        if(method !== "GET")
+          rawinput.removeClass("hidden");
+        else
+          rawinput.addClass("hidden");
+
+        switch(method){
+          case "POST":
+            editor_theinput.set({
+              "mode": "single",
+              "data": {}
+            });
+            break;
+          case "SEARCH":
+            editor_theinput.set({
+              "mode": "single",
+              "query": {},
+              "data": {}
+            });
+            break;
+          case "PUT":
+            editor_theinput.set({
+              "mode": "single",
+              "query": {},
+              "data": {}
+            });
+            break;
+          case "DELETE":
+            editor_theinput.set({
+              "mode": "single",
+              "query": {}
+            });
+            break;
+        }
+
+        xhr.prop("method", method);
+        methodButtonText.text(method + " ");
+        methodButtonText.parent().removeClass("btn-primary btn-info btn-success btn-warning btn-danger");
+        methodButtonText.parent().addClass("btn-" + target.getAttribute("data-button-color"));
+      });
+
+      toQuery();
+
+      var outputContainer = $("#output-container");
+
+      xhr.submit(function(event){
+        event.preventDefault();
+        var url = xhrBase.val() + xhrUrl.val();
+        var method = xhr.prop("method").toUpperCase();
+
+        $.ajax(url, {
+          method: method,
+          data: (method !== "GET" && editor_theinput.getText()) || {},
+          contentType: "application/json",
+          success: function(data, status, xhr){
+            if(data.error){
+              alertOnPage("warning", "Error", data.error.message);
+            } else {
+              outputContainer.removeClass("hidden");
+              console.log(data);
+              editor_output.set(data);
+            }
+          },
+          error: function(xhr, status){
+            console.log("Status:" + status);
+            console.log(xhr);
+          }
+        });
+
+        return false;
+      });
+  
+      var collection = "#{collection.name}";
+      var elem_add = document.getElementById('editor_holder_add');
+      var elem_schema = document.getElementById('editor_holder_schema');
+
+      var schema_update_button = $(".schema-update-button");
+      var schema_reset_button = $(".schema-reset-button");
+      var schema_example_button = $(".schema-example-button");
+
+      var schema;
+      var example_schema = '{"title": "Person","type": "object","properties": {"name": {"type": "string","description": "First and Last name","minLength": 4,"default": "Jeremy Dorn"},"age": {"type": "integer","default": 25,"minimum": 18,"maximum": 99},"favorite_color": {"type": "string","format": "color","title": "favorite color","default": "#ffa500"},"gender": {"type": "string","enum": ["male","female"]},"location": {"type": "object","title": "Location","properties": {"city": {"type": "string","default": "San Francisco"},"state": {"type": "string","default": "CA"},"citystate": {"type": "string","description": "This is generated automatically from the previous two fields","template": "{{city}}, {{state}}","watch": {"city": "location.city","state": "location.state"}}}},"pets": {"type": "array","format": "table","title": "Pets","uniqueItems": true,"items": {"type": "object","title": "Pet","properties": {"type": {"type": "string","enum": ["cat","dog","bird","reptile","other"],"default": "dog"},"name": {"type": "string"}}},"default": [{"type": "dog","name": "Walter"}]}}}';
+      
+      if(elem_schema)
+        schema = JSON.parse(elem_schema.getAttribute("data-savedSchema"));
+      else
+        schema = JSON.parse(editor_add.getAttribute("data-savedSchema"));
+
+      var options = {
+        mode: 'tree',
+        error: function (err) {
+          alert(err.toString());
+        }
+      };
+      editor_add = new JSONEditor2(elem_add, {
+        schema: schema,
+        theme: "bootstrap3",
+        disable_edit_json: true,
+        disable_properties: true,
+        form_name_root: collection
+      });
+
+      var editor_schema = new JSONEditor(elem_schema, options, schema);
+      editor_schema.setMode("tree");
+      
+      schema_example_button.click(function(event){
+        event.preventDefault();
+        editor_schema.set(JSON.parse(example_schema));
+        editor_schema.expandAll();
+        if(editor_add) editor_add.destroy();
+        editor_add = new JSONEditor2(elem_add,{
+          schema: JSON.parse(example_schema),
+          theme: "bootstrap3",
+          disable_edit_json: true,
+          disable_properties: true,
+          form_name_root: collection
+        });
+      });
+
+      schema_reset_button.click(function(event){
+        event.preventDefault();
+        editor_schema.set(schema);
+        editor_schema.expandAll();
+        if(editor_add) editor_add.destroy();
+        editor_add = new JSONEditor2(elem_add,{
+          schema: schema,
+          theme: "bootstrap3",
+          disable_edit_json: true,
+          disable_properties: true,
+          form_name_root: collection
+        });
+      });
+      
+      var schemaInput = $("#schemaInput");
+      schema_update_button.click(function(event){
+        event.preventDefault();
+        schemaInput.val(editor_schema.getText());
+        $("#schema-update-from").submit();
+      });
+
+      var addButton = $("#addButton");
+
+      addButton.click(function(){
+        var url = xhrBase.val() + xhrUrl.val();
+        var data = {mode: "single", data: editor_add.getValue()};
+        data = JSON.stringify(data);
+        $.ajax(url, {
+          method: "POST",
+          data: data,
+          contentType: "application/json",
+          crossDomain: true,
+          success: function(data, status, xhr){
+            if(data.error){
+              alertOnPage("warning", "Error", data.error.message);
+            } else {
+              outputContainer.removeClass("hidden");
+              console.log(data);
+              alertOnPage("success", "Success", "New Input is successfully added"); 
+            }
+          },
+          error: function(xhr, status){
+            console.log("Status:" + status);
+            console.log(xhr);
+          }
+        });
+      });
+
+      var getList = $("#getList");
+      var listHolder = $("#list-holder");
+
+      getList.click(function(){
+        var url = xhrBase.val() + xhrUrl.val();
+        $.ajax(url, {
+          method: "GET",
+          data: {},
+          contentType: "application/json",
+          crossDomain: true,
+          success: function(data, status, xhr){
+            if(data.error){
+              alertOnPage("warning", "Error", data.error.message);
+            } else {
+              outputContainer.removeClass("hidden");
+              var list = data.data;
+              var i = 0;
+              for(; i < list.length; i++){
+                var adata = list[i];
+                var html = "<div class='list-group-item'><div class='row'>";
+                var keycount = 0;
+                for(var key in adata){
+                  if(keycount === 5)
+                    break;
+                  if(typeof adata[key] !== "object"){
+                    html += "<div class='col-md-4 info-list clearfix'><b>"+ key +"</b><span class='pull-right'>"+ adata[key] +"</span></div>";
+                    keycount++;
+                  }
+                }
+
+                html += "</div></div>";
+                listHolder.append(html);
+              }
+            }
+          },
+          error: function(xhr, status){
+            console.log("Status:" + status);
+            console.log(xhr);
+          }
+        });
+      });
+      
+    }());

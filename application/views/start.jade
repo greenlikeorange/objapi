@@ -1,0 +1,49 @@
+extends layouts/layout
+
+block content
+  .container
+    .row
+      .col-md-12
+        .introduction
+          h1.main-header Object API 
+            small Beta
+          br
+          p.lead Let Create and API with Schemaless Object Database
+          br
+      
+        .row
+          .col-md-4
+            - if (next)
+              form(method="POST", action="/register")#register
+                input(type="hidden", name="password", value="#{data.password}")
+                .form-group
+                  input(type="text", required="true", name="username", placeholder="Username").form-control
+                .form-group
+                  input(type="email", required="true", name="email", placeholder="Email", value="#{data.email}").form-control
+                .btn-group
+                  button(type="submit").btn.btn-default Register
+            - else
+              form(method="POST", action="")#login
+                input(type="hidden", name="loginType", value="login")
+                .form-group
+                  input(type="email", required="true", name="email", placeholder="Email").form-control
+                .form-group
+                  input(type="password", required="true", name="password", placeholder="Password").form-control
+                .btn-group
+                  button(type="submit", data-login-type="login").btn.btn-default Login
+                  button(type="submit", data-login-type="register").btn.btn-default Register
+
+
+block scripts
+  script.
+    (function(){
+      var loginForm = $("#login");
+      var buttons = $("#login button");
+
+      buttons.click(function(event){
+        event.preventDefault();
+        loginForm.find("[name='loginType']").val(event.target.getAttribute("data-login-type"));
+        loginForm.submit();
+      });
+      
+    }())

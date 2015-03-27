@@ -1,0 +1,47 @@
+doctype html
+html
+  head
+    title Object API Admin
+    meta(charset="utf-8")
+    link(rel="stylesheet", href="/css/font.css")
+    link(rel="stylesheet", href="/bootstrap/dist/css/bootstrap.min.css")
+    link(rel="stylesheet", href="/font-awesome/css/font-awesome.min.css")
+    link(rel="stylesheet", href="/jsoneditor/dist/jsoneditor.css")
+    link(rel="stylesheet", href="/css/admin.css")
+  body
+  
+    nav.navbar.navbar-default.navbar-fixed-top
+      .container-fluid
+        .navbar-header
+          button(type="button", data-toggle="collapse", data-target="#navbar-collapse-1").navbar-toggle.collapsed
+            .sr-only Toggle navigation
+            .icon-bar
+            .icon-bar
+            .icon-bar
+          a(href="/").navbar-brand Object API
+            small.text-light  for Android Study Gum
+        ul.nav.navbar-nav.navbar-right
+          li.dropdown
+            a(href="#", data-toggle="dropdown", role="button", aria-expanded="false").dropdown-toggle
+              | Welcome #{user.username}
+              //- span.caret
+
+    .container-fluid
+      .row
+        .col-md-12.alerts
+          if alerts
+            for alert in alerts
+              div(role="alert", class="alert alert-#{alert.type} alert-dismissible")
+                button(type="button" class="close" data-dismiss="alert" aria-label="Close")
+                  span(aria-hidden="true") &times;
+                strong.alert-title #{alert.title}
+                |  #{alert.message}
+
+    block content
+
+    script(type="text/javascript", src="/jquery/dist/jquery.min.js")
+    script(type="text/javascript", src="/bootstrap/dist/js/bootstrap.min.js")
+    script(type="text/javascript", src="/jsoneditor/dist/jsoneditor.js")
+    script(type="text/javascript", src="/js/jsoneditor.js")
+    script(type="text/javascript", src="/js/functions.js")
+    block scripts

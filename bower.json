@@ -1,0 +1,13 @@
+{
+  "name": "objapi",
+  "version": "0.0.1",
+  "authors": [
+    "Thuya Myo Nyunt <beginofalove@hotmail.com>"
+  ],
+  "license": "All Right",
+  "private": true,
+  "dependencies": {
+    "bootstrap": "3.3.2",
+    "font-awesome": "4.3.0"
+  }
+}
