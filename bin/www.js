@@ -63,6 +63,6 @@ Server.prototype.createServer = function(){
 };
 
 var application = require("../application/app");
-var app = new Server("OBJECT API", application, 80, "kupid.server:API");
+var app = new Server("OBJECT API", application, process.env.PORT || 3000, "kupid.server:API");
 
 app.createServer();

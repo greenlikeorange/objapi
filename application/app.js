@@ -57,13 +57,13 @@ app.use(express.static(path.join(__dirname, "../bower_components")));
 // Manipulate controllers 
 
 app.use(vhost("kny.local", require("./controllers/home_controller")));
-app.use(vhost("kny.local", require("./controllers/user_controller")));
+app.use(vhost("kny.co", require("./controllers/user_controller")));
 
-app.use(vhost("objapi.kny.co", require("./controllers/home_controller")));
+app.use(vhost("objapi.kny.local", require("./controllers/home_controller")));
 app.use(vhost("objapi.kny.co", require("./controllers/user_controller")));
 
 /* API */
-app.use(vhost("*.kny.local", require("./controllers/collection_controller")));
+app.use(vhost("*.objapi.kny.local", require("./controllers/collection_controller")));
 app.use(vhost("*.objapi.kny.co", require("./controllers/collection_controller")));
 
 // catch 404 and forward to error handler
